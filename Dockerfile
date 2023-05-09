@@ -1,193 +1,212 @@
-FROM debian:11.3
+FROM rust:1-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SOURCE_DATE_EPOCH=1231006505
-ENV http_proxy=$http_proxy
-ENV https_proxy=$http_proxy
-ENV HTTP_PROXY=$http_proxy
-ENV HTTPS_PROXY=$http_proxy
 
 # installing packages in the container
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
-        build-essential \
-        ca-certificates \
-        cpio \
-        curl \
-        coreutils \
-        debootstrap \
-        grub-efi-amd64-bin \
-        mtools \
-        squashfs-tools \
-        xorriso \
-        xz-utils
+	build-essential \
+	ca-certificates \
+	cpio \
+	curl \
+	coreutils \
+	debootstrap \
+	grub-efi-amd64-bin \
+	grub-efi-amd64-signed \
+	isolinux \
+	syslinux-common \
+	mtools \
+	squashfs-tools \
+	xorriso \
+	xz-utils \
+	python3-pip \
+	python3-dev \
+	python3-pytest
 
-RUN sh -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-RUN /root/.cargo/bin/cargo install --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.5.0 --features=reserves,electrum
+RUN cargo install --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
 
-RUN mkdir -p /LIVE_BOOT \
- && debootstrap \
-        --arch=amd64 \
-        --variant=minbase \
-        bullseye \
-        /LIVE_BOOT/chroot \
-        http://ftp.ch.debian.org/debian/
+WORKDIR LIVE_BOOT
+
+RUN debootstrap \
+	--arch=amd64 \
+	--variant=minbase \
+	bullseye \
+	ROOTFS \
+	http://deb.debian.org/debian/
 
 # installing packages in the chroot
-RUN chroot /LIVE_BOOT/chroot sh -c "apt-get update && \
-	apt-get install --no-install-recommends -y \
-        build-essential \
-        dosfstools \
-        electrum \
-        evince \
-        fdisk \
-        firefox-esr \
-        fonts-freefont-ttf \
-        keepassxc \
-        mtools \
-        libgl1 \
-        libglib2.0-0 \
-        libpython3-dev \
-        libykpiv2 \
-        linux-image-amd64 \
-        live-boot \
-        openssh-client \
-        pcscd \
-        python3 \
-        python3-btchip \
-        python3-cryptography \
-        python3-dev \
-        python3-future \
-        python3-gnupg \
-        python3-lxml \
-        python3-pip \
-        python3-pycryptodome \
-        python3-pyqt5 \
-        python3-pytest \
-        python3-pytest-cov \
-        python3-setuptools \
-        python3-trezor \
-        python3-wheel \
-        python3-yubikey-manager \
-        systemd-timesyncd \
-        udev \
-        vim \
-        xfce4 \
-        xfce4-terminal \
-        mousepad \
-        xinit \
-        xserver-xorg-core \
-        xserver-xorg \
+RUN chroot ROOTFS apt-get install --no-install-recommends -y \
+	bind9-dnsutils \
+	bind9-host \
+	dosfstools \
+	fdisk \
+	electrum \
+	evince \
+	firefox-esr \
+	fonts-freefont-ttf \
+	keepassxc \
+	libykpiv2 \
+	linux-image-amd64 \
+	live-boot \
+	openssh-client \
+	usbutils \
+	pcscd \
+	gpg \
+	python3-ecdsa \
+	python3-hidapi \
+	python3-libusb1 \
+	python3-mnemonic \
+	python3-pyaes \
+	python3-pyqt5 \
+	python3-semver \
+	python3-trezor \
+	python3-typing-extensions \
+	systemd-timesyncd \
+	udev \
+	xfce4 \
+	xfce4-terminal \
+	mousepad \
+	xinit \
+	xserver-xorg \
 	yubioath-desktop \
 	yubikey-manager \
 	yubikey-personalization \
 	yubikey-personalization-gui \
-	yubico-piv-tool \
-    && pip3 install --upgrade pip \
-    && pip3 install wheel \
-    && pip3 install --upgrade keepkey \
-    && pip3 install --upgrade btchip-python \
-    && pip3 install --upgrade ckcc-protocol \
-    && pip3 install --upgrade bitbox02 \	
-    && pip3 install protobuf==3.20 \	
-    "
-RUN chroot /LIVE_BOOT/chroot /usr/bin/busybox --install -s
+	yubico-piv-tool
+
+# TODO: add --install-option test
+RUN pip3 install --no-warn-script-location --no-deps --root ROOTFS \
+	bitbox02 \
+	base58 \
+	noiseprotocol \
+	protobuf==3.20 \
+	btchip-python \
+	ckcc-protocol \
+	keepkey
 
 # setting up udev rules for the hardware wallets in the chroot
-RUN chroot /LIVE_BOOT/chroot sh -c "wget -q -O - https://raw.githubusercontent.com/LedgerHQ/udev-rules/master/add_udev_rules.sh | bash || true"
-RUN chroot /LIVE_BOOT/chroot sh -c "curl -OL https://raw.githubusercontent.com/keepkey/udev-rules/master/51-usb-keepkey.rules \
-    && mv 51-usb-keepkey.rules /usr/lib/udev/rules.d \
-    && udevadm control --reload-rules || true"
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/20-hw1.rules                ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-coinkite.rules           ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-hid-digitalbitbox.rules  ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-safe-t.rules             ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-trezor.rules             ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-usb-keepkey.rules        ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/52-hid-digitalbitbox.rules  ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/53-hid-bitbox02.rules       ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/54-hid-bitbox02.rules       ROOTFS/etc/udev/rules.d/
+ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/55-usb-jade.rules           ROOTFS/etc/udev/rules.d/
+
+# Ethereum tools
+ADD https://github.com/ethereum/staking-deposit-cli/releases/download/v2.5.0/staking_deposit-cli-d7b5304-linux-amd64.tar.gz staking_deposit-cli-linux-amd64.tar.gz
+RUN tar -C ROOTFS/usr/local/bin --strip-components=2 -zxf staking_deposit-cli-linux-amd64.tar.gz
+RUN ls ROOTFS/usr/local/bin/deposit
+
+ADD https://github.com/wealdtech/ethdo/releases/download/v1.28.5/ethdo-1.28.5-linux-amd64.tar.gz ethdo-linux-amd64.tar.gz
+RUN tar -C ROOTFS/usr/local/bin -zxf ethdo-linux-amd64.tar.gz
+RUN ROOTFS/usr/local/bin/ethdo version
+
+ADD https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.5-a38f4108.tar.gz geth-alltools-linux-amd64.tar.gz
+RUN tar -C ROOTFS/usr/local/bin --strip-components=1 -zxf geth-alltools-linux-amd64.tar.gz
+
+RUN chroot ROOTFS /usr/bin/busybox --install -s
 
 # installing bdk-cli in the chroot
-RUN cp /usr/bin/bdk-cli  /LIVE_BOOT/chroot/usr/bin/bdk-cli
+RUN cp /usr/bin/bdk-cli ROOTFS/usr/bin/
 
-RUN ln -sf /usr/share/zoneinfo/CET /LIVE_BOOT/chroot/etc/localtime \
- && echo CET > /LIVE_BOOT/chroot/etc/timezone \
- && mkdir -p /LIVE_BOOT/chroot/media/usb
+RUN ln -sf /usr/share/zoneinfo/CET ROOTFS/etc/localtime \
+ && echo CET > ROOTFS/etc/timezone
 
-RUN chroot /LIVE_BOOT/chroot apt-get autoremove -y \
-        build-essential \
-        libpython3-dev \
- && chroot /LIVE_BOOT/chroot apt-get clean \
- && ln -sf /run/systemd/resolve/resolv.conf  /LIVE_BOOT/chroot/etc/resolv.conf \
- && rm -rf \
-        /LIVE_BOOT/chroot/etc/machine-id \
-        /LIVE_BOOT/chroot/var/lib/dbus/machine-id \
-        /LIVE_BOOT/chroot/etc/motd \
-        /LIVE_BOOT/chroot/tmp/* \
-        /LIVE_BOOT/chroot/usr/local/share/fonts/.uuid \
-        /LIVE_BOOT/chroot/usr/share/doc/ \
-        /LIVE_BOOT/chroot/usr/share/locale/ \
-        /LIVE_BOOT/chroot/usr/share/man/ \
-        /LIVE_BOOT/chroot/var/cache/* \
-        /LIVE_BOOT/chroot/var/lib/apt/lists/ \
-        /LIVE_BOOT/chroot/var/lib/dpkg/info/ \
-        /LIVE_BOOT/chroot/var/log/*log \
-        /LIVE_BOOT/chroot/var/log/apt/* \
-        /LIVE_BOOT/chroot/root/.gnupg/random_seed \
-        /LIVE_BOOT/chroot/root/.gnupg/pubring.kbx \
-        /LIVE_BOOT/chroot/root/.cache/pip \
- && sh -c "find /LIVE_BOOT/chroot/usr/share/fonts -name .uuid       -type f -depth -exec rm -rf {} \;" \
- && sh -c "find /LIVE_BOOT/chroot/usr/lib         -name __pycache__ -type d -depth -exec rm -rf {} \;" \
- && sh -c "find /LIVE_BOOT/chroot/usr/local/lib   -name __pycache__ -type d -depth -exec rm -rf {} \;"
+RUN mkdir -p ROOTFS/media/usb
 
-WORKDIR /
-COPY resources/skeleton/                        /LIVE_BOOT/chroot/
+RUN ln -sf /run/systemd/resolve/resolv.conf  ROOTFS/etc/resolv.conf \
+ && rm -r \
+	ROOTFS/etc/machine-id \
+	ROOTFS/var/lib/dbus/machine-id \
+	ROOTFS/etc/motd \
+	ROOTFS/usr/local/share/fonts/.uuid \
+	ROOTFS/usr/share/doc/ \
+	ROOTFS/usr/share/locale/ \
+	ROOTFS/usr/share/man/ \
+	ROOTFS/var/cache/* \
+	ROOTFS/var/lib/apt/lists/ \
+	ROOTFS/var/lib/dpkg/info/ \
+	ROOTFS/var/log/*log \
+	ROOTFS/var/log/apt/* \
+ && find ROOTFS/usr/share       -name .uuid       -type f -delete \
+ && find ROOTFS/usr/lib         -name __pycache__ -type d -exec rm -r "{}" + \
+ && find ROOTFS/usr/local/lib   -name __pycache__ -type d -exec rm -r "{}" +
 
-RUN chroot /LIVE_BOOT/chroot usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
-RUN chroot /LIVE_BOOT/chroot useradd -G users,lp,disk --create-home -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
- && chroot /LIVE_BOOT/chroot chown -R satoshi:satoshi /home/satoshi \
- && chroot /LIVE_BOOT/chroot systemctl enable systemd-timesyncd
+COPY resources/skeleton/ ROOTFS/
 
-RUN mkdir -p /LIVE_BOOT/staging/live \
+RUN chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
+RUN chroot ROOTFS useradd -G users,lp,disk --create-home -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
+ && chroot ROOTFS chown -R satoshi:satoshi /home/satoshi \
+ && chroot ROOTFS systemctl enable systemd-timesyncd
+
+RUN mkdir -p staging/live \
  && mksquashfs \
-        /LIVE_BOOT/chroot \
-        /LIVE_BOOT/staging/live/filesystem.squashfs \
-        -e boot
+	ROOTFS/ \
+	staging/live/filesystem.squashfs \
+	-e boot
 
-COPY resources/grub.cfg                 /LIVE_BOOT/staging/boot/grub/grub.cfg
-COPY resources/grub-standalone.cfg      /LIVE_BOOT/
+COPY resources/isolinux.cfg		staging/isolinux/isolinux.cfg
+COPY resources/grub.cfg			staging/boot/grub/grub.cfg
+COPY resources/grub-early.cfg	.
 
-RUN mkdir -p /LIVE_BOOT/staging/EFI/boot \
+RUN mkdir -p staging/efi/boot \
  && grub-mkimage \
-        --compression="xz" \
-        --format="x86_64-efi" \
-        --output="/LIVE_BOOT/staging/EFI/boot/bootx64.efi" \
-        --config="/LIVE_BOOT/grub-standalone.cfg" \
-        --prefix="/boot/grub" \
-        all_video disk part_gpt part_msdos linux normal configfile search \
-        search_label efi_gop fat iso9660 cat echo ls test true help gzio
+	--compression="xz" \
+	--format="x86_64-efi" \
+	--config="grub-early.cfg" \
+	--output="staging/efi/boot/bootx64.efi" \
+	--prefix="/boot/grub" \
+	all_video disk part_gpt part_msdos linux normal configfile search \
+	search_label efi_gop fat iso9660 cat echo ls test true help gzio
 
-RUN touch /LIVE_BOOT/staging/DEBIAN_CUSTOM \
- && mv /LIVE_BOOT/chroot/boot/vmlinuz-*          /LIVE_BOOT/staging/live/vmlinuz \
- && mv /LIVE_BOOT/chroot/boot/initrd.img-*       /LIVE_BOOT/staging/live/initrd \
- && mkdir -p                                    /LIVE_BOOT/staging/boot/grub/x86_64-efi/ \
- && mv /usr/lib/grub/x86_64-efi/*.*             /LIVE_BOOT/staging/boot/grub/x86_64-efi/
+RUN mv ROOTFS/boot/vmlinuz-*          staging/live/vmlinuz \
+ && mv ROOTFS/boot/initrd.img-*       staging/live/initrd \
+ && mkdir -p                          staging/boot/grub/x86_64-efi/ \
+ && mv /usr/lib/grub/x86_64-efi/*.*   staging/boot/grub/x86_64-efi/
 
-RUN mformat -i /LIVE_BOOT/staging/efiboot.img -C -f 1440 -N 0 :: \
- && mcopy   -i /LIVE_BOOT/staging/efiboot.img -s /LIVE_BOOT/staging/EFI ::
+RUN mformat -i staging/boot/grub/efi.img -C -f 1440 -N 0 :: \
+ && mcopy   -i staging/boot/grub/efi.img -s staging/efi ::
+
+RUN mkdir -p staging/boot/syslinux/ \
+ && mv  /usr/lib/ISOLINUX/isohdpfx.bin \
+		/usr/lib/ISOLINUX/isolinux.bin \
+		/usr/lib/syslinux/modules/bios/ldlinux.c32 \
+		/usr/lib/syslinux/modules/bios/libutil.c32 \
+		/usr/lib/syslinux/modules/bios/libcom32.c32 \
+		/usr/lib/syslinux/modules/bios/mboot.c32 \
+		staging/boot/syslinux/
 
 CMD touch -md "@${SOURCE_DATE_EPOCH}" \
-        /LIVE_BOOT/staging/boot/grub/* \
-        /LIVE_BOOT/staging/boot/grub/ \
-        /LIVE_BOOT/staging/live/initrd \
-        /LIVE_BOOT/staging/live/filesystem.squashfs \
-        /LIVE_BOOT/staging/EFI/boot/bootx64.efi \
-        /LIVE_BOOT/staging/EFI/boot/ \
-        /LIVE_BOOT/staging/* \
-        /LIVE_BOOT/staging \
+	staging/boot/grub/* \
+	staging/boot/grub/ \
+	staging/live/initrd \
+	staging/live/filesystem.squashfs \
+	staging/efi/boot/bootx64.efi \
+	staging/efi/boot/ \
+	staging/* \
+	staging \
  && xorrisofs \
-        -iso-level 3 \
-        -o "output/debian-live.iso" \
-        -full-iso9660-filenames \
-        -joliet \
-        -rational-rock \
-        -sysid LINUX \
-        -volid "$(echo DEB${TAG} | cut -c -32)" \
-        -eltorito-alt-boot \
-                -e efiboot.img \
-                -no-emul-boot \
-                -isohybrid-gpt-basdat \
-        /LIVE_BOOT/staging \
- && sha256sum output/debian-live.iso
+	-quiet \
+	-output /output/debian-live.iso \
+	-full-iso9660-filenames \
+	-joliet \
+	-rational-rock \
+	-sysid LINUX \
+	-volid "$(echo DEB${TAG} | cut -c -32)" \
+	-isohybrid-mbr staging/boot/syslinux/isohdpfx.bin \
+		-eltorito-boot boot/syslinux/isolinux.bin \
+		-eltorito-catalog boot/syslinux/boot.cat \
+		-no-emul-boot \
+		-boot-load-size 4 \
+		-boot-info-table \
+	-eltorito-alt-boot \
+		-e boot/grub/efi.img \
+		-no-emul-boot \
+		-isohybrid-gpt-basdat \
+	staging/ \
+ && sha256sum /output/debian-live.iso
