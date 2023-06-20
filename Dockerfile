@@ -1,58 +1,73 @@
-FROM rust:1-bullseye
+FROM rust:1-bookworm as builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV SOURCE_DATE_EPOCH=1231006505
 
 # installing packages in the container
 RUN apt-get update
+
+
+FROM builder as bdk-cli
+RUN cargo install --locked --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
+
+
+FROM builder
 RUN apt-get install -y --no-install-recommends \
 	build-essential \
-	ca-certificates \
-	cpio \
-	curl \
 	coreutils \
 	debootstrap \
+	fakechroot \
 	grub-efi-amd64-bin \
-	grub-efi-amd64-signed \
-	isolinux \
-	syslinux-common \
+	libsystemd-shared \
 	mtools \
-	squashfs-tools \
-	xorriso \
-	xz-utils \
-	python3-pip \
 	python3-dev \
-	python3-pytest
-
-RUN cargo install --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
+	python3-pip \
+	python3-pytest \
+	isolinux \
+	squashfs-tools \
+	syslinux-common \
+	xorriso \
+	xz-utils
 
 WORKDIR LIVE_BOOT
 
-RUN debootstrap \
+RUN fakechroot debootstrap \
 	--arch=amd64 \
-	--variant=minbase \
-	bullseye \
+	--include=linux-image-amd64,live-boot \
+	--exclude=\
+apt-utils,\
+cron-daemon-common,\
+cron,\
+debconf-i18n,\
+ifupdown,\
+iproute2,\
+iputils-ping,\
+isc-dhcp-client,\
+isc-dhcp-common,\
+logrotate,\
+nano,\
+nftables,\
+sensible-utils \
+	--variant=fakechroot \
+	bookworm \
 	ROOTFS \
 	http://deb.debian.org/debian/
 
 # installing packages in the chroot
-RUN chroot ROOTFS apt-get install --no-install-recommends -y \
-	bind9-dnsutils \
-	bind9-host \
+RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	dosfstools \
-	fdisk \
 	electrum \
 	evince \
+	fdisk \
 	firefox-esr \
 	fonts-freefont-ttf \
+	fonts-noto-mono \
+	gpg \
 	keepassxc \
 	libykpiv2 \
-	linux-image-amd64 \
-	live-boot \
+	mousepad \
 	openssh-client \
-	usbutils \
 	pcscd \
-	gpg \
 	python3-ecdsa \
 	python3-hidapi \
 	python3-libusb1 \
@@ -62,18 +77,19 @@ RUN chroot ROOTFS apt-get install --no-install-recommends -y \
 	python3-semver \
 	python3-trezor \
 	python3-typing-extensions \
+	systemd-resolved \
 	systemd-timesyncd \
-	udev \
+	usbutils \
 	xfce4 \
 	xfce4-terminal \
-	mousepad \
 	xinit \
 	xserver-xorg \
-	yubioath-desktop \
+	yubico-piv-tool \
 	yubikey-manager \
 	yubikey-personalization \
-	yubikey-personalization-gui \
-	yubico-piv-tool
+	yubioath-desktop
+
+RUN fakechroot chroot ROOTFS /usr/bin/busybox --install -s
 
 # TODO: add --install-option test
 RUN pip3 install --no-warn-script-location --no-deps --root ROOTFS \
@@ -109,57 +125,67 @@ RUN ROOTFS/usr/local/bin/ethdo version
 ADD https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.5-a38f4108.tar.gz geth-alltools-linux-amd64.tar.gz
 RUN tar -C ROOTFS/usr/local/bin --strip-components=1 -zxf geth-alltools-linux-amd64.tar.gz
 
-RUN chroot ROOTFS /usr/bin/busybox --install -s
+# set a timezone
+RUN ln -sf /usr/share/zoneinfo/CET  ROOTFS/etc/localtime \
+ && echo CET >                      ROOTFS/etc/timezone
 
-# installing bdk-cli in the chroot
-RUN cp /usr/bin/bdk-cli ROOTFS/usr/bin/
-
-RUN ln -sf /usr/share/zoneinfo/CET ROOTFS/etc/localtime \
- && echo CET > ROOTFS/etc/timezone
-
+# make directory for mounting USB sticks (defined in fstab)
 RUN mkdir -p ROOTFS/media/usb
-
-RUN ln -sf /run/systemd/resolve/resolv.conf  ROOTFS/etc/resolv.conf \
- && rm -r \
-	ROOTFS/etc/machine-id \
-	ROOTFS/var/lib/dbus/machine-id \
-	ROOTFS/etc/motd \
-	ROOTFS/usr/local/share/fonts/.uuid \
-	ROOTFS/usr/share/doc/ \
-	ROOTFS/usr/share/locale/ \
-	ROOTFS/usr/share/man/ \
-	ROOTFS/var/cache/* \
-	ROOTFS/var/lib/apt/lists/ \
-	ROOTFS/var/lib/dpkg/info/ \
-	ROOTFS/var/log/*log \
-	ROOTFS/var/log/apt/* \
- && find ROOTFS/usr/share       -name .uuid       -type f -delete \
- && find ROOTFS/usr/lib         -name __pycache__ -type d -exec rm -r "{}" + \
- && find ROOTFS/usr/local/lib   -name __pycache__ -type d -exec rm -r "{}" +
 
 COPY resources/skeleton/ ROOTFS/
 
-RUN chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
-RUN chroot ROOTFS useradd -G users,lp,disk --create-home -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
- && chroot ROOTFS chown -R satoshi:satoshi /home/satoshi \
- && chroot ROOTFS systemctl enable systemd-timesyncd
+RUN fakechroot chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
+RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout --create-home -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
+ && fakechroot chroot ROOTFS chown -R satoshi:satoshi /home/satoshi \
+ && fakechroot chroot ROOTFS systemctl enable systemd-timesyncd
 
-RUN mkdir -p staging/live \
- && mksquashfs \
-	ROOTFS/ \
+# installing bdk-cli in the chroot
+COPY --from=bdk-cli /usr/bin/bdk-cli ROOTFS/usr/bin/
+
+# remove not necessary components
+RUN rm -r \
+		ROOTFS/etc/.resolv.conf.systemd-resolved.bak \
+		ROOTFS/etc/*- \
+		ROOTFS/etc/motd \
+		ROOTFS/usr/local/man \
+		ROOTFS/usr/local/share/man \
+		ROOTFS/usr/share/doc \
+		ROOTFS/usr/share/locale \
+		ROOTFS/usr/share/man \
+		ROOTFS/var/cache/* \
+		ROOTFS/var/lib/apt/lists \
+		ROOTFS/var/lib/dpkg/info \
+ && find ROOTFS -name '[a-z]*[.-]old' -delete
+
+# remove not reproducibile files
+RUN rm -r \
+		ROOTFS/var/lib/dbus/machine-id \
+		ROOTFS/var/log/* \
+ && find ROOTFS/usr/lib       -name __pycache__ -type d -depth -exec rm -rf {} \; \
+ && find ROOTFS/usr/local/lib -name __pycache__ -type d -depth -exec rm -rf {} \;
+
+RUN mkdir -p staging/live
+RUN fakechroot chroot ROOTFS \
+	tar c --no-xattrs --no-same-owner \
+	--exclude=/boot \
+	--exclude=/dev/* \
+	--exclude=/proc/* \
+	--exclude=/sys/* \
+	--sort=name / \
+	| mksquashfs - \
 	staging/live/filesystem.squashfs \
-	-e boot
+	-tar -exit-on-error
 
 COPY resources/isolinux.cfg		staging/isolinux/isolinux.cfg
 COPY resources/grub.cfg			staging/boot/grub/grub.cfg
 COPY resources/grub-early.cfg	.
 
-RUN mkdir -p staging/efi/boot \
+RUN mkdir -p staging/EFI/boot \
  && grub-mkimage \
 	--compression="xz" \
 	--format="x86_64-efi" \
 	--config="grub-early.cfg" \
-	--output="staging/efi/boot/bootx64.efi" \
+	--output="staging/EFI/boot/bootx64.efi" \
 	--prefix="/boot/grub" \
 	all_video disk part_gpt part_msdos linux normal configfile search \
 	search_label efi_gop fat iso9660 cat echo ls test true help gzio
@@ -169,8 +195,8 @@ RUN mv ROOTFS/boot/vmlinuz-*          staging/live/vmlinuz \
  && mkdir -p                          staging/boot/grub/x86_64-efi/ \
  && mv /usr/lib/grub/x86_64-efi/*.*   staging/boot/grub/x86_64-efi/
 
-RUN mformat -i staging/boot/grub/efi.img -C -f 1440 -N 0 :: \
- && mcopy   -i staging/boot/grub/efi.img -s staging/efi ::
+RUN mformat -i staging/efiboot.img -C -f 1440 -N 0 :: \
+ && mcopy   -i staging/efiboot.img -s staging/EFI ::
 
 RUN mkdir -p staging/boot/syslinux/ \
  && mv  /usr/lib/ISOLINUX/isohdpfx.bin \
@@ -186,13 +212,13 @@ CMD touch -md "@${SOURCE_DATE_EPOCH}" \
 	staging/boot/grub/ \
 	staging/live/initrd \
 	staging/live/filesystem.squashfs \
-	staging/efi/boot/bootx64.efi \
-	staging/efi/boot/ \
+	staging/EFI/boot/bootx64.efi \
+	staging/EFI/boot/ \
 	staging/* \
 	staging \
  && xorrisofs \
-	-quiet \
-	-output /output/debian-live.iso \
+	-iso-level 3 \
+	-o /output/livedeb.iso \
 	-full-iso9660-filenames \
 	-joliet \
 	-rational-rock \
@@ -205,8 +231,8 @@ CMD touch -md "@${SOURCE_DATE_EPOCH}" \
 		-boot-load-size 4 \
 		-boot-info-table \
 	-eltorito-alt-boot \
-		-e boot/grub/efi.img \
+		-e efiboot.img \
 		-no-emul-boot \
 		-isohybrid-gpt-basdat \
 	staging/ \
- && sha256sum /output/debian-live.iso
+ && sha256sum /output/livedeb.iso
