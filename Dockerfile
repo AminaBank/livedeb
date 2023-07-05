@@ -67,6 +67,7 @@ RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	libykpiv2 \
 	mousepad \
 	openssh-client \
+	p7zip-full \
 	pcscd \
 	python3-ecdsa \
 	python3-hidapi \
@@ -79,6 +80,8 @@ RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	python3-typing-extensions \
 	systemd-resolved \
 	systemd-timesyncd \
+	thunar-archive-plugin \
+	xarchiver \
 	usbutils \
 	xfce4 \
 	xfce4-terminal \
