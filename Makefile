@@ -24,11 +24,11 @@ run: iso
 usb: iso
 	test -b ${USB_DISK}
 	@umount ${USB_DISK}* || :
-	sudo dd bs=4M of=${USB_DISK} if=output/debian-live.iso status=progress
+	sudo dd bs=4M of=${USB_DISK} if=output/livedeb.iso status=progress
 	sync
 
 cd: iso
-	wodim -eject -tao output/debian-live.iso
+	wodim -eject -tao output/livedeb.iso
 
 clear_docker:
 	docker rmi ${TAG}
