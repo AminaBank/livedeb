@@ -7,6 +7,31 @@ ENV SOURCE_DATE_EPOCH=1231006505
 RUN apt-get update
 
 
+FROM builder AS downloads
+# udev rules for the hardware wallets
+RUN wget -q -P /etc/udev/rules.d \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/20-hw1.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/51-coinkite.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/51-hid-digitalbitbox.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/51-safe-t.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/51-trezor.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/51-usb-keepkey.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/52-hid-digitalbitbox.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/53-hid-bitbox02.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/54-hid-bitbox02.rules \
+	https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/55-usb-jade.rules
+# Ethereum tools
+RUN wget -q -O - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.12.0-e501b3b0.tar.gz \
+  | tar -C /usr/local/bin --strip-components=1 -zx
+RUN geth --version
+RUN wget -q -O - https://github.com/wealdtech/ethdo/releases/download/v1.28.5/ethdo-1.28.5-linux-amd64.tar.gz \
+  | tar -C /usr/local/bin -zx
+RUN ethdo version
+RUN wget -q -O - https://github.com/ethereum/staking-deposit-cli/releases/download/v2.5.0/staking_deposit-cli-d7b5304-linux-amd64.tar.gz \
+  | tar -C /usr/local/bin --strip-components=2 -zx
+RUN LC_ALL=C.UTF-8 deposit --help > /dev/null
+
+
 FROM builder as bdk-cli
 RUN cargo install --locked --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
 
@@ -104,30 +129,6 @@ RUN pip3 install --no-warn-script-location --no-deps --root ROOTFS \
 	ckcc-protocol \
 	keepkey
 
-# setting up udev rules for the hardware wallets in the chroot
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/20-hw1.rules                ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-coinkite.rules           ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-hid-digitalbitbox.rules  ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-safe-t.rules             ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-trezor.rules             ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/51-usb-keepkey.rules        ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/52-hid-digitalbitbox.rules  ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/53-hid-bitbox02.rules       ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/54-hid-bitbox02.rules       ROOTFS/etc/udev/rules.d/
-ADD https://raw.githubusercontent.com/spesmilo/electrum/master/contrib/udev/55-usb-jade.rules           ROOTFS/etc/udev/rules.d/
-
-# Ethereum tools
-ADD https://github.com/ethereum/staking-deposit-cli/releases/download/v2.5.0/staking_deposit-cli-d7b5304-linux-amd64.tar.gz staking_deposit-cli-linux-amd64.tar.gz
-RUN tar -C ROOTFS/usr/local/bin --strip-components=2 -zxf staking_deposit-cli-linux-amd64.tar.gz
-RUN ls ROOTFS/usr/local/bin/deposit
-
-ADD https://github.com/wealdtech/ethdo/releases/download/v1.28.5/ethdo-1.28.5-linux-amd64.tar.gz ethdo-linux-amd64.tar.gz
-RUN tar -C ROOTFS/usr/local/bin -zxf ethdo-linux-amd64.tar.gz
-RUN ROOTFS/usr/local/bin/ethdo version
-
-ADD https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.12.0-e501b3b0.tar.gz geth-alltools-linux-amd64.tar.gz
-RUN tar -C ROOTFS/usr/local/bin --strip-components=1 -zxf geth-alltools-linux-amd64.tar.gz
-
 # set a timezone
 RUN ln -sf /usr/share/zoneinfo/CET  ROOTFS/etc/localtime \
  && echo CET >                      ROOTFS/etc/timezone
@@ -142,7 +143,11 @@ RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout --create-home 
  && fakechroot chroot ROOTFS chown -R satoshi:satoshi /home/satoshi \
  && fakechroot chroot ROOTFS systemctl enable systemd-timesyncd
 
-# installing bdk-cli in the chroot
+# copy downloaded files
+COPY --from=downloads /usr/local/bin    ROOTFS/usr/local/bin
+COPY --from=downloads /etc/udev/rules.d ROOTFS/etc/udev/rules.d
+
+# copy bdk-cli to the chroot
 COPY --from=bdk-cli /usr/bin/bdk-cli ROOTFS/usr/bin/
 
 # remove not necessary components
