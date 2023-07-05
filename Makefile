@@ -19,7 +19,7 @@ builder:
 		-t ${TAG} .
 
 run: iso
-	qemu-system-x86_64 -cdrom output/debian-live.iso -m 2048 -bios /usr/share/ovmf/OVMF.fd
+	qemu-system-x86_64 -cdrom output/livedeb.iso -m 2048 -bios /usr/share/ovmf/OVMF.fd
 
 usb: iso
 	test -b ${USB_DISK}
