@@ -122,7 +122,7 @@ ADD https://github.com/wealdtech/ethdo/releases/download/v1.28.5/ethdo-1.28.5-li
 RUN tar -C ROOTFS/usr/local/bin -zxf ethdo-linux-amd64.tar.gz
 RUN ROOTFS/usr/local/bin/ethdo version
 
-ADD https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.11.5-a38f4108.tar.gz geth-alltools-linux-amd64.tar.gz
+ADD https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.12.0-e501b3b0.tar.gz
 RUN tar -C ROOTFS/usr/local/bin --strip-components=1 -zxf geth-alltools-linux-amd64.tar.gz
 
 # set a timezone
