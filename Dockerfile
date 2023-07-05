@@ -210,6 +210,7 @@ RUN mkdir -p staging/boot/syslinux/ \
 CMD touch -md "@${SOURCE_DATE_EPOCH}" \
 	staging/boot/grub/* \
 	staging/boot/grub/ \
+	staging/boot/syslinux/ \
 	staging/live/initrd \
 	staging/live/filesystem.squashfs \
 	staging/EFI/boot/bootx64.efi \
