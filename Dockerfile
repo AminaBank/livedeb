@@ -33,7 +33,7 @@ RUN LC_ALL=C.UTF-8 deposit --help > /dev/null
 
 
 FROM builder as bdk-cli
-RUN cargo install --locked --root /usr --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
+RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
 
 
 FROM builder
@@ -139,16 +139,14 @@ RUN mkdir -p ROOTFS/media/usb
 COPY resources/skeleton/ ROOTFS/
 
 RUN fakechroot chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
-RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout --create-home -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
- && fakechroot chroot ROOTFS chown -R satoshi:satoshi /home/satoshi \
- && fakechroot chroot ROOTFS systemctl enable systemd-timesyncd
-
+RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
+ && fakechroot chroot ROOTFS chown -R satoshi:satoshi /home/satoshi
 # copy downloaded files
-COPY --from=downloads /usr/local/bin    ROOTFS/usr/local/bin
 COPY --from=downloads /etc/udev/rules.d ROOTFS/etc/udev/rules.d
+COPY --from=downloads /usr/local/bin    ROOTFS/usr/local/bin
 
 # copy bdk-cli to the chroot
-COPY --from=bdk-cli /usr/bin/bdk-cli ROOTFS/usr/bin/
+COPY --from=bdk-cli /usr/local/bin/bdk-cli ROOTFS/usr/local/bin/
 
 # remove not necessary components
 RUN rm -r \
