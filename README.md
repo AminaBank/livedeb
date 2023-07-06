@@ -22,6 +22,7 @@ Tools included
 ** ColdCard
 ** KeepKey
 * bdk-cli
+* electrum2descriptors
 * keepass-xc
 * openssh-client 
 * yubioath-desktop
