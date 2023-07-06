@@ -221,6 +221,7 @@ CMD touch -md "@${SOURCE_DATE_EPOCH}" \
 	staging/boot/grub/* \
 	staging/boot/grub/ \
 	staging/boot/syslinux/ \
+    staging/isolinux/* \
 	staging/live/initrd \
 	staging/live/filesystem.squashfs \
 	staging/EFI/boot/bootx64.efi \
