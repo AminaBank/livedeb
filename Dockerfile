@@ -34,6 +34,7 @@ RUN LC_ALL=C.UTF-8 deposit --help > /dev/null
 
 FROM builder as bdk-cli
 RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli --tag v0.27.1 --features=reserves,electrum
+RUN cargo install --root /usr/local --git https://github.com/RCasatta/electrum2descriptors --rev de23c65f5db34a108dbbb1407f858e4e7f404b12
 
 
 FROM builder
