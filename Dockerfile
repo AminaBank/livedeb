@@ -36,7 +36,7 @@ FROM builder as cargo-install
 RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli \
 	--tag v0.27.1 --features=reserves,electrum
 RUN cargo install --locked --root /usr/local --git https://github.com/weareseba/electrum2descriptors \
-	--branch feature/rust-1.69 
+	--branch feature/rust-1.69
 
 
 FROM builder
@@ -90,6 +90,7 @@ RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	firefox-esr \
 	fonts-freefont-ttf \
 	fonts-noto-mono \
+	gpa \
 	gpg \
 	keepassxc \
 	libykpiv2 \
