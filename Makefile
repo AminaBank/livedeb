@@ -9,6 +9,9 @@ iso: builder
 		--env TAG="$(shell git describe --long --always --dirty)" \
 		${TAG}
 
+sign: iso
+	sha256sum output/livedeb.iso | gpg --clearsign
+
 builder:
 	chmod -R go-w resources
 	DOCKER_BUILDKIT=1 \
