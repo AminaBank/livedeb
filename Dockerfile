@@ -32,12 +32,9 @@ RUN wget -q -O - https://github.com/ethereum/staking-deposit-cli/releases/downlo
 RUN LC_ALL=C.UTF-8 deposit --help > /dev/null
 
 
-FROM builder as bdk-cli
+FROM builder as cargo-install
 RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli \
 	--tag v0.27.1 --features=reserves,electrum
-
-# maybe separate container?
-# FROM builder as electrum2descriptors
 RUN cargo install --locked --root /usr/local --git https://github.com/RCasatta/electrum2descriptors \
 	--rev de23c65f5db34a108dbbb1407f858e4e7f404b12 --no-default-features --features ""
 
@@ -151,8 +148,9 @@ RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout -c 'Satoshi Na
 COPY --from=downloads /etc/udev/rules.d ROOTFS/etc/udev/rules.d
 COPY --from=downloads /usr/local/bin    ROOTFS/usr/local/bin
 
-# copy bdk-cli to the chroot
-COPY --from=bdk-cli /usr/local/bin/bdk-cli ROOTFS/usr/local/bin/
+# copy binaries built with cargo to the chroot
+COPY --from=cargo-install /usr/local/bin/bdk-cli              ROOTFS/usr/local/bin/
+COPY --from=cargo-install /usr/local/bin/electrum2descriptors ROOTFS/usr/local/bin/
 
 # remove not necessary components
 RUN rm -r \
