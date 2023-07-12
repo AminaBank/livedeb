@@ -90,6 +90,7 @@ RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	firefox-esr \
 	fonts-freefont-ttf \
 	fonts-noto-mono \
+	gpa \
 	gpg \
 	keepassxc \
 	libykpiv2 \

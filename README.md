@@ -27,6 +27,7 @@ The idea is that private keys can be handled securely on a minimal live system t
 * [staking-deposit-cli](https://github.com/ethereum/staking-deposit-cli)
 * [ethdo](https://github.com/wealdtech/ethdo)
 * keepass-xc
+* [GnuPG](https://www.gnupg.org/) + [GPA](https://www.gnupg.org/related_software/gpa/)
 * openssh-client
 * yubioath-desktop
 * yubikey-personalization
