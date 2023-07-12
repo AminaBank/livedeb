@@ -24,7 +24,7 @@ RUN wget -q -P /etc/udev/rules.d \
 RUN wget -q -O - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.12.0-e501b3b0.tar.gz \
   | tar -C /usr/local/bin --strip-components=1 -zx
 RUN geth --version
-RUN wget -q -O - https://github.com/wealdtech/ethdo/releases/download/v1.28.5/ethdo-1.28.5-linux-amd64.tar.gz \
+RUN wget -q -O - https://github.com/wealdtech/ethdo/releases/download/v1.32.0/ethdo-1.32.0-linux-amd64.tar.gz \
   | tar -C /usr/local/bin -zx
 RUN ethdo version
 RUN wget -q -O - https://github.com/ethereum/staking-deposit-cli/releases/download/v2.5.0/staking_deposit-cli-d7b5304-linux-amd64.tar.gz \
@@ -36,7 +36,7 @@ FROM builder as cargo-install
 RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli \
 	--tag v0.27.1 --features=reserves,electrum
 RUN cargo install --locked --root /usr/local --git https://github.com/weareseba/electrum2descriptors \
-	--branch feature/rust-1.69 
+	--branch feature/rust-1.69
 
 
 FROM builder
