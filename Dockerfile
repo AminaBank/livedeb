@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV SOURCE_DATE_EPOCH=1231006505
 
 # installing packages in the container
-RUN apt-get update
+RUN apt-get update && apt-get upgrade -y
 
 
 FROM builder AS downloads
