@@ -33,7 +33,7 @@ RUN LC_ALL=C.UTF-8 deposit --help > /dev/null
 
 
 FROM builder as cargo-install
-RUN cargo install --locked --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli \
+RUN cargo install --root /usr/local --git https://github.com/bitcoindevkit/bdk-cli \
 	--tag v0.27.1 --features=reserves,electrum
 RUN cargo install --locked --root /usr/local --git https://github.com/weareseba/electrum2descriptors \
 	--branch feature/rust-1.69
