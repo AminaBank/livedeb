@@ -107,6 +107,8 @@ RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	python3-semver \
 	python3-trezor \
 	python3-typing-extensions \
+	rsync \
+	scdaemon \
 	systemd-resolved \
 	systemd-timesyncd \
 	thunar-archive-plugin \

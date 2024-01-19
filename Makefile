@@ -25,6 +25,9 @@ builder:
 run: iso
 	qemu-system-x86_64 -cdrom output/livedeb.iso -m 2048 -bios /usr/share/ovmf/OVMF.fd
 
+run_yubi: iso
+	qemu-system-x86_64 -cdrom output/livedeb.iso -m 2048 -bios /usr/share/ovmf/OVMF.fd -M q35 -usb -device usb-host,productid=0x0407,vendorid=0x1050
+
 usb: iso
 	test -b ${USB_DISK}
 	@umount ${USB_DISK}* || :
