@@ -38,7 +38,7 @@
   - enter a PIN of your choosing, which you can remember
   - enter the same PIN again
 - Execute the following steps to change the PUK aka Admin PIN:
-  - type "3" to select changing the PIN
+  - type "3" to select changing the PUK
   - type "12345678" and Enter
   - enter a PUK of your choosing, and write it down on a piece of paper.
   - enter the same PUK again
@@ -51,10 +51,12 @@
 - Insert and mount a USB stick.
 - Copy the folder "/home/satoshi/Desktop/gnupg_temp" to the USB stick
 - Unmount and remove the USB stick.
-- Insert the USB stick together with the paper containing the PUK into a temper evident bag, and close it.
+- Insert the USB stick together with the paper containing the PUK into a temper evident bag, and close it. This is an unencrypted backup. Handle it with the necessary care, and never connect this USB stick to an online computer.
 - Insert and mount a second USB stick.
 - Copy the file "/home/satoshi/Desktop/gnupg_temp/public_NICKNAME.asc" to the USB stick
 - Unmount and remove the USB stick.
+- Moving the master key to a second YubiKey is left as an excercise for the reader.
+- If you want to elevate the security of the keys, you can also initialize multiple Yubikeys, and not make a backup.
 
 ## Set up the key on your work cmoputer
 
@@ -65,4 +67,11 @@
 - Insert the YubiKey
 - Type "gpg --card-status" in the terminal and Enter. This will create stubs for the private keys.
 - Type "gpg --list-secret-keys" in the terminal and Enter. Make sure your keys are listed.
-- 
+- Type "gpg --card-status | grep "Signature key" | awk '{print $10$11$12$13}'" and add the output appended with an exclamation mark to the following locations:
+  - in the Evolution eMail settings in the field "OpenGPG-key of the security tab.
+  - in your ~/.bashrc add a line "export GPGKEY="
+- make sure your gpg-agent starts with ssh support
+  - execute the following command: "echo enable-ssh-support >> $HOME/.gnupg/gpg-agent.conf"
+  - copy the lines from [.bashrc in livedeb](https://github.com/AminaBank/livedeb/tree/master/resources/skeleton/home/satoshi/.bashrc) to your ~/.bashrc file
+- execute the command "ssh-add -L" and verify that the output looks like a valid SSH public key, and that it mentions "cardno:". This is the public key you can register in SSH servers and source control systems.
+-
