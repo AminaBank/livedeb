@@ -3,6 +3,7 @@
 - Prepare a secure computer, preferrably a Tempest machine, by removing the harddisk and any network cable or USB devices.
 - Boot the machine with a DVD generated from [livedeb](https://github.com/AminaBank/livedeb)
 - Open a terminal
+- Insert the YubiKey
 - Execute the following command, while replacing the UPPERCASE parts with your actual information. The last part "rsa4096" is only necessary if you intend to use the SSH key with outdated systems such as [Azure DevOps](https://developercommunity.visualstudio.com/t/Cant-use-ed25519-ssh-key/462263?q=Ed25519) 
   - /home/satoshi/gpg_yubi/gpg_yubikey.sh "SURNAME FAMILYNAME" NICKNAME SURNAME.FAMILYNAME@COMPANY.com rsa4096
 - This generates a master key and three sub keys for encryption, signing and authentication
@@ -49,7 +50,7 @@
 - When asked for the Admin PIN, enter the PUK you just wrote on the paper. This will repeat 3 times
 - When asked to disable touch policy, answer with "y". This can also happen 3 times.
 - Insert and mount a USB stick.
-- Copy the folder "/home/satoshi/Desktop/gnupg_temp" to the USB stick
+- Copy the whole home folder "/home/satoshi" to the USB stick
 - Unmount and remove the USB stick.
 - Insert the USB stick together with the paper containing the PUK into a temper evident bag, and close it. This is an unencrypted backup. Handle it with the necessary care, and never connect this USB stick to an online computer.
 - Insert and mount a second USB stick.
@@ -57,6 +58,7 @@
 - Unmount and remove the USB stick.
 - Moving the master key to a second YubiKey is left as an excercise for the reader.
 - If you want to elevate the security of the keys, you can also initialize multiple Yubikeys, and not make a backup.
+- Shut down the computer.
 
 ## Set up the key on your work cmoputer
 

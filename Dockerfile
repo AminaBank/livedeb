@@ -82,7 +82,9 @@ sensible-utils \
 	http://deb.debian.org/debian/
 
 # installing packages in the chroot
-RUN fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
+RUN fakechroot chroot ROOTFS apt-get update \
+ && fakechroot chroot ROOTFS apt-get -y dist-upgrade \
+ && fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
 	dosfstools \
 	electrum \
 	evince \

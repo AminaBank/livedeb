@@ -20,7 +20,7 @@ if [ -n "$4" ] ; then
     export GPG_ALGO="$4"
     export GPG_ALGOE="$4"
 fi
-if [ -z $GPG_NAME ] || [ -z $GPG_NICK ] || [ -z $GPG_EMAIL ] ; then
+if [ -z "$GPG_NAME" ] || [ -z "$GPG_NICK" ] || [ -z "$GPG_EMAIL" ] ; then
     echo No information about the user of the new key! There are two ways you can specify this information:
     echo Either you call this script with the parameters such as:
     echo ./gpg_yubikey.sh \"Satoshi Nakamoto\" sat satoshi@bitcoin.org
