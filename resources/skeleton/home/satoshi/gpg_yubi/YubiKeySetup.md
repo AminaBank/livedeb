@@ -60,7 +60,7 @@
 - If you want to elevate the security of the keys, you can also initialize multiple Yubikeys, and not make a backup.
 - Shut down the computer.
 
-## Set up the key on your work cmoputer
+## Set up the key on your work computer
 
 - Insert and mount the USB stick with the public key.
 - Copy the public_*.asc file from the USB stick to your HOME directory. 
@@ -75,5 +75,5 @@
 - make sure your gpg-agent starts with ssh support
   - execute the following command: "echo enable-ssh-support >> $HOME/.gnupg/gpg-agent.conf"
   - copy the lines from [.bashrc in livedeb](https://github.com/AminaBank/livedeb/tree/master/resources/skeleton/home/satoshi/.bashrc) to your ~/.bashrc file
-- execute the command "ssh-add -L" and verify that the output looks like a valid SSH public key, and that it mentions "cardno:". This is the public key you can register in SSH servers and source control systems.
--
+- execute the command `ssh-add -L` and verify that the output looks like a valid SSH public key, and that it mentions `cardno:`. This is the public key you can register in SSH servers and source control systems.
+- execute the command `gpg --card-edit` to update the card settings; many options will require the `admin` priviledge. At the prompt, enter `admin` and then `forcesig`. This will prevent the system asking for the Signature PIN each time it is required, by caching it.
