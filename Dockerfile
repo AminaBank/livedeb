@@ -40,11 +40,11 @@ RUN cargo install --locked --root /usr/local --git https://github.com/weareseba/
 
 
 FROM builder
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
 	build-essential \
 	coreutils \
 	debootstrap \
-	fakechroot \
 	grub-efi-amd64-bin \
 	libsystemd-shared \
 	mtools \
@@ -59,7 +59,7 @@ RUN apt-get install -y --no-install-recommends \
 
 WORKDIR LIVE_BOOT
 
-RUN fakechroot debootstrap \
+RUN debootstrap \
 	--arch=amd64 \
 	--include=linux-image-amd64,live-boot \
 	--exclude=\
@@ -76,15 +76,15 @@ logrotate,\
 nano,\
 nftables,\
 sensible-utils \
-	--variant=fakechroot \
+	--variant=minbase \
 	bookworm \
 	ROOTFS \
 	http://deb.debian.org/debian/
 
 # installing packages in the chroot
-RUN fakechroot chroot ROOTFS apt-get update \
- && fakechroot chroot ROOTFS apt-get -y dist-upgrade \
- && fakechroot chroot ROOTFS apt-get install -y --no-install-recommends \
+RUN chroot ROOTFS apt-get update \
+ && chroot ROOTFS apt-get -y dist-upgrade \
+ && chroot ROOTFS apt-get install -y --no-install-recommends \
 	dosfstools \
 	electrum \
 	evince \
@@ -125,7 +125,7 @@ RUN fakechroot chroot ROOTFS apt-get update \
 	yubikey-personalization \
 	yubioath-desktop
 
-RUN fakechroot chroot ROOTFS /usr/bin/busybox --install -s
+RUN chroot ROOTFS /usr/bin/busybox --install -s
 
 # TODO: add --install-option test
 RUN pip3 install --no-warn-script-location --no-deps --root ROOTFS \
@@ -146,9 +146,9 @@ RUN mkdir -p ROOTFS/media/usb
 
 COPY resources/skeleton/ ROOTFS/
 
-RUN fakechroot chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
-RUN fakechroot chroot ROOTFS useradd -G users,lp,disk,adm,dialout -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
- && fakechroot chroot ROOTFS chown -R satoshi:satoshi /home/satoshi
+RUN chroot ROOTFS usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root # lock root account
+RUN chroot ROOTFS useradd -G users,lp,disk,adm,dialout -c 'Satoshi Nakamoto' -s /bin/bash satoshi \
+ && chroot ROOTFS chown -R satoshi:satoshi /home/satoshi
 # copy downloaded files
 COPY --from=downloads /etc/udev/rules.d ROOTFS/etc/udev/rules.d
 COPY --from=downloads /usr/local/bin    ROOTFS/usr/local/bin
@@ -180,7 +180,7 @@ RUN rm -r \
  && find ROOTFS/usr/local/lib -name __pycache__ -type d -depth -exec rm -rf {} \;
 
 RUN mkdir -p staging/live
-RUN fakechroot chroot ROOTFS \
+RUN chroot ROOTFS \
 	tar c --no-xattrs --no-same-owner \
 	--exclude=/boot \
 	--exclude=/dev/* \
