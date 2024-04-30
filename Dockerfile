@@ -164,7 +164,6 @@ RUN rm -r \
 		ROOTFS/etc/motd \
 		ROOTFS/usr/local/man \
 		ROOTFS/usr/local/share/man \
-		ROOTFS/usr/share/doc \
 		ROOTFS/usr/share/locale \
 		ROOTFS/usr/share/man \
 		ROOTFS/var/cache/* \
