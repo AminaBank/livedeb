@@ -89,4 +89,4 @@ This error is due to some missing configuration for `gpg-agent`. Run the followi
 - if a `pinenetry` program is not installed, you can install it by running `sudo apt install pinenetry-tty` for CLI version or `sudo apt install pinenetry-gnome3` for a GUI version based for GNOME
 - once done that verify that `pinenetry` command shows info about the new installed one
 - if you have different version of it, you can select the default one by runninng `sudo update-alternatives --config pinentry`
-- run `echo pinenetry-program $(which pinenetry) >> ~/.gnupg/gpg-agent.conf' and then `gpgconf --kill gpg-agent` to ensure that gpg-angent recognizes the new configuration
+- run `echo pinenetry-program $(which pinenetry) >> ~/.gnupg/gpg-agent.conf` and then `gpgconf --kill gpg-agent` to ensure that gpg-angent recognizes the new configuration
