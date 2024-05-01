@@ -80,7 +80,7 @@
 
 ## Troubleshooting
 
-# Error `sign_and_send_pubkey: signing failed for RSA "XXXX" from agent: agent refused operation`
+### Error `sign_and_send_pubkey: signing failed for RSA "XXXX" from agent: agent refused operation`
 
 This error is due to some missing configuration for `gpg-agent`. Run the following:
 - `cat ~/.gnupg/gpg-agent.conf` and ensure that is present the line `pinentry-program /path/to/pinenetry`
