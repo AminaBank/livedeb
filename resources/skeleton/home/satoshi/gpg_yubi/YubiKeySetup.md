@@ -77,3 +77,16 @@
   - copy the lines from [.bashrc in livedeb](https://github.com/AminaBank/livedeb/tree/master/resources/skeleton/home/satoshi/.bashrc) to your ~/.bashrc file
 - execute the command `ssh-add -L` and verify that the output looks like a valid SSH public key, and that it mentions `cardno:`. This is the public key you can register in SSH servers and source control systems.
 - execute the command `gpg --card-edit` to update the card settings; many options will require the `admin` priviledge. At the prompt, enter `admin` and then `forcesig`. This will prevent the system asking for the Signature PIN each time it is required, by caching it.
+
+## Troubleshooting
+
+# Error `sign_and_send_pubkey: signing failed for RSA "XXXX" from agent: agent refused operation`
+
+This error is due to some missing configuration for `gpg-agent`. Run the following:
+- `cat ~/.gnupg/gpg-agent.conf` and ensure that is present the line `pinentry-program /path/to/pinenetry`
+- if not present, check if you have a `pinentry` program installed by running `which pinentry`. The output should report the location of the pinenetry program installed on your machine
+- double check the `pinenetry` program presence under `/usr/bin/pinenetry*`. You could see different entries, this depends on what kind of system/configuration you are using as PIN prompt
+- if a `pinenetry` program is not installed, you can install it by running `sudo apt install pinenetry-tty` for CLI version or `sudo apt install pinenetry-gnome3` for a GUI version based for GNOME
+- once done that verify that `pinenetry` command shows info about the new installed one
+- if you have different version of it, you can select the default one by runninng `sudo update-alternatives --config pinentry`
+- run `echo pinenetry-program $(which pinenetry) >> ~/.gnupg/gpg-agent.conf' and then `gpgconf --kill gpg-agent` to ensure that gpg-angent recognizes the new configuration
