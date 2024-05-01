@@ -83,10 +83,10 @@
 ### Error `sign_and_send_pubkey: signing failed for RSA "XXXX" from agent: agent refused operation`
 
 This error is due to some missing configuration for `gpg-agent`. Run the following:
-- `cat ~/.gnupg/gpg-agent.conf` and ensure that is present the line `pinentry-program /path/to/pinenetry`
-- if not present, check if you have a `pinentry` program installed by running `which pinentry`. The output should report the location of the pinenetry program installed on your machine
-- double check the `pinenetry` program presence under `/usr/bin/pinenetry*`. You could see different entries, this depends on what kind of system/configuration you are using as PIN prompt
-- if a `pinenetry` program is not installed, you can install it by running `sudo apt install pinenetry-tty` for CLI version or `sudo apt install pinenetry-gnome3` for a GUI version based for GNOME
-- once done that verify that `pinenetry` command shows info about the new installed one
+- `cat ~/.gnupg/gpg-agent.conf` and ensure that is present the line `pinentry-program /path/to/pinentry`
+- if not present, check if you have a `pinentry` program installed by running `which pinentry`. The output should report the location of the pinentry program installed on your machine
+- double check the `pinentry` program presence under `/usr/bin/pinentry*`. You could see different entries, this depends on what kind of system/configuration you are using as PIN prompt
+- if a `pinentry` program is not installed, you can install it by running `sudo apt install pinentry-tty` for CLI version or `sudo apt install pinentry-gnome3` for a GUI version based for GNOME
+- once done that verify that `pinentry` command shows info about the new installed one
 - if you have different version of it, you can select the default one by runninng `sudo update-alternatives --config pinentry`
-- run `echo pinenetry-program $(which pinenetry) >> ~/.gnupg/gpg-agent.conf` and then `gpgconf --kill gpg-agent` to ensure that gpg-angent recognizes the new configuration
+- run `echo pinentry-program $(which pinentry) >> ~/.gnupg/gpg-agent.conf` and then `gpgconf --kill gpg-agent` to ensure that gpg-angent recognizes the new configuration
