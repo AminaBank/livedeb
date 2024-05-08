@@ -112,6 +112,7 @@ RUN mmdebstrap \
 		ckcc-protocol \
 		keepkey' \
 	--customize-hook='chroot "$1" /usr/bin/busybox --install -s' \
+	--customize-hook='chroot "$1" systemctl enable systemd-networkd' \
 	--customize-hook="download /vmlinuz staging/live/vmlinuz" \
 	--customize-hook="download /initrd.img staging/live/initrd" \
 	--customize-hook='set -e; for f in 20-hw1.rules 51-coinkite.rules 51-hid-digitalbitbox.rules 51-safe-t.rules 51-trezor.rules 51-usb-keepkey.rules 52-hid-digitalbitbox.rules 53-hid-bitbox02.rules 54-hid-bitbox02.rules 55-usb-jade.rules; do \
