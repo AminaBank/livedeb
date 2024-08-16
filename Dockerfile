@@ -52,6 +52,7 @@ RUN mmdebstrap \
 	--dpkgopt='path-include=/usr/share/doc/*/changelog.Debian.*' \
 	--include='\
 		busybox,\
+		dhcping,\
 		dosfstools,\
 		electrum,\
 		evince,\
@@ -62,6 +63,7 @@ RUN mmdebstrap \
 		gpa,\
 		gpg,\
 		grub-efi-amd64-bin,\
+		iptraf-ng,\
 		isolinux,\
 		keepassxc,\
 		libykpiv2,\
@@ -89,6 +91,8 @@ RUN mmdebstrap \
 		thunar-archive-plugin,\
 		usbutils,\
 		vim,\
+		wireshark,\
+		wireshark-common,\
 		xarchiver,\
 		xfce4,\
 		xfce4-terminal,\
@@ -100,6 +104,9 @@ RUN mmdebstrap \
 		yubioath-desktop' \
 	--customize-hook='chroot "$1" usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root' \
 	--customize-hook='chroot "$1" useradd -G users,lp,disk,adm,dialout -c "Satoshi Nakamoto" --home-dir /home/satoshi --create-home -s /bin/bash satoshi' \
+	--customize-hook='chroot "$1" chmod 4755 /sbin/dhcping' \
+	--customize-hook='chroot "$1" chmod 4755 /sbin/iptraf' \
+	--customize-hook='chroot "$1" chmod 4755 /sbin/iptraf-ng' \
 	--customize-hook='sync-in resources/skeleton/ /' \
 	--customize-hook='sync-in /usr/local/bin/ /usr/local/bin/' \
 	--customize-hook='chroot "$1" chown -R satoshi:satoshi /home/satoshi' \
