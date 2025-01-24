@@ -1,1 +1,2 @@
-/dev/usbdisk    /media/usb      vfat    noauto,user         0 0
+/dev/usbdisk    /media/usb-rw   vfat    noauto,user,rw         0 0
+/dev/usbdisk    /media/usb-ro   vfat    noauto,user,ro         0 0
