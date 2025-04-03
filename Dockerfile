@@ -59,7 +59,6 @@ RUN mmdebstrap \
 		firefox-esr,\
 		fonts-freefont-ttf,\
 		fonts-noto-mono,\
-		gpa,\
 		gpg,\
 		grub-efi-amd64-bin,\
 		isolinux,\
@@ -68,19 +67,21 @@ RUN mmdebstrap \
 		libnss-resolve,\
 		linux-image-amd64,\
 		live-boot,\
+		nodm,\
 		mousepad,\
 		openssh-client,\
 		p7zip-full,\
 		pcscd,\
 		python3-ecdsa,\
 		python3-hidapi,\
-		python3-libusb1,\
 		python3-mnemonic,\
 		python3-pyaes,\
 		python3-pyqt5,\
 		python3-semver,\
 		python3-trezor,\
 		python3-typing-extensions,\
+		python3-usb,\
+		python3-usb1,\
 		rsync,\
 		scdaemon,\
 		syslinux-common,\
@@ -99,7 +100,7 @@ RUN mmdebstrap \
 		yubikey-personalization,\
 		yubioath-desktop' \
 	--customize-hook='chroot "$1" usermod --expiredate 1 --shell /usr/sbin/nologin --password ! root' \
-	--customize-hook='chroot "$1" useradd -G users,lp,disk,adm,dialout -c "Satoshi Nakamoto" --home-dir /home/satoshi --create-home -s /bin/bash satoshi' \
+	--customize-hook='chroot "$1" useradd -G users,lp,disk,adm,dialout,video -c "Satoshi Nakamoto" --home-dir /home/satoshi --create-home -s /bin/bash satoshi' \
 	--customize-hook='sync-in resources/skeleton/ /' \
 	--customize-hook='sync-in /usr/local/bin/ /usr/local/bin/' \
 	--customize-hook='chroot "$1" chown -R satoshi:satoshi /home/satoshi' \
@@ -143,7 +144,7 @@ RUN mmdebstrap \
 	--customize-hook='find "$1" -name "[a-z]*[.-]old" -delete' \
 	--customize-hook='find "$1/usr/lib" -name __pycache__ -type d -depth -exec rm -rf {} \;' \
 	--customize-hook='find "$1/usr/local/lib" -name __pycache__ -type d -depth -exec rm -rf {} \;' \
-	bookworm staging/live/filesystem.squashfs
+	trixie staging/live/filesystem.squashfs
 
 COPY resources/isolinux.cfg     staging/isolinux/isolinux.cfg
 COPY resources/grub.cfg         staging/boot/grub/grub.cfg
