@@ -29,11 +29,6 @@ ${ISO_FILENAME_NOSB}: builder
 	@git --version
 	docker run \
 		--rm \
-		--interactive \
-		--tty \
-		--volume /run/pcscd:/run/pcscd:ro \
-		--volume /run/user/${UID}/gnupg/S.gpg-agent:/root/.gnupg/S.gpg-agent:ro \
-		--volume ${HOME}/.gnupg:/root/.gnupg:ro \
 		--volume ${PWD}/output:/home/satoshi/output \
 		--env SOURCE_DATE_EPOCH=$(shell git log -1 --format=%ct) \
 		--env TAG="$(shell git log -1 --format=%h)" \

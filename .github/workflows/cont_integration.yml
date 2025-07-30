@@ -1,0 +1,16 @@
+on: [push, pull_request]
+
+name: CI
+
+jobs:
+
+  iso-nosb:
+    name: Build an ISO without secureboot
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: make iso-nosb
+      - name: checksum
+        run: sha256sum output/*
