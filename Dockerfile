@@ -21,6 +21,8 @@ ENV VERITY_UUID=12345678-1234-1234-1234-123456789abc
 RUN apt-get update \
  && apt-get -y dist-upgrade \
  && apt-get install -y --no-install-recommends \
+	autoconf \
+	automake \
 	bash \
 	build-essential \
 	coreutils \
@@ -39,11 +41,13 @@ RUN apt-get update \
 	libcryptsetup-dev \
 	libengine-pkcs11-openssl \
 	libsystemd-shared \
+	libtool \
 	locales \
 	mmdebstrap \
 	mtools \
 	opensc-pkcs11 \
 	openssl \
+	pkg-config \
 	python3-dev \
 	python3-pip \
 	python3-pytest \
@@ -129,6 +133,7 @@ RUN mmdebstrap \
 		openssh-client,\
 		p7zip-full,\
 		pcscd,\
+		python3-btchip,\
 		python3-ecdsa,\
 		python3-hidapi,\
 		python3-mnemonic,\
@@ -167,13 +172,15 @@ RUN mmdebstrap \
 	--customize-hook='sync-in resources/skeleton/ /' \
 	--customize-hook='sync-in /usr/local/bin/ /usr/local/bin/' \
 	--customize-hook='chroot "$1" chown -R satoshi:satoshi /home/satoshi' \
-	--customize-hook='pip3 install --no-cache-dir --no-warn-script-location --no-deps --root "$1" \
-		bitbox02 \
+	--customize-hook='pip3 install --no-cache-dir --no-warn-script-location --root "$1" \
+		bitbox02==6.3.0 \
 		base58 \
+		jade-client==1.0.32 \
 		noiseprotocol \
 		protobuf==3.20 \
-		ledger-bitcoin \
-		ckcc-protocol \
+		ledger-bitcoin==0.2.2 \
+		ledgercomm==1.2.1 \
+		ckcc-protocol==0.7.7 \
 		keepkey' \
 	--customize-hook='chroot "$1" /usr/bin/busybox --install -s' \
 	--customize-hook='chroot "$1" systemctl enable NetworkManager' \
@@ -181,7 +188,7 @@ RUN mmdebstrap \
 	--customize-hook="download /vmlinuz staging/live/vmlinuz.unsigned" \
 	--customize-hook="download /initrd.img staging/live/initrd" \
 	--customize-hook='set -e; mkdir -p "$1/etc/udev/rules.d"; for f in 20-hw1.rules 51-coinkite.rules 51-hid-digitalbitbox.rules 51-safe-t.rules 51-trezor.rules 51-usb-keepkey.rules 52-hid-digitalbitbox.rules 53-hid-bitbox02.rules 54-hid-bitbox02.rules 55-usb-jade.rules; do \
-		wget -q -P "$1/etc/udev/rules.d" "https://raw.githubusercontent.com/spesmilo/electrum/4.4.5/contrib/udev/$f"; done' \
+		wget -q -P "$1/etc/udev/rules.d" "https://raw.githubusercontent.com/spesmilo/electrum/4.5.8/contrib/udev/$f"; done' \
 	--customize-hook='wget -q -O - https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.13.11-8f7eb9cc.tar.gz | tar -C "$1/usr/local/bin" --strip-components=1 -zx' \
 	--customize-hook='wget -q -O - https://github.com/wealdtech/ethdo/releases/download/v1.35.2/ethdo-1.35.2-linux-amd64.tar.gz | tar -C "$1/usr/local/bin" -zx' \
 	--customize-hook='wget -q -O - https://github.com/ethereum/staking-deposit-cli/releases/download/v2.7.0/staking_deposit-cli-fdab65d-linux-amd64.tar.gz  | tar -C "$1/usr/local/bin" --strip-components=2 -zx' \

@@ -77,24 +77,26 @@ run:
 
 run-nosb:
 	bash -c "if [ ! -f ${ISO_FILENAME_NOSB} ]; then make ${ISO_FILENAME_NOSB} ; fi"
+	$(shell lsusb -d 2c97:1015 | sed -E "s/.*Bus ([0-9]*) Device ([0-9]*).*/sudo chown ${USER}:docker \/dev\/bus\/usb\/\1\/\2/")
 	qemu-system-x86_64 \
 		-enable-kvm \
 		-machine q35,smm=on \
 		-m 2048 \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-bios /usr/share/ovmf/OVMF.fd \
+		-usb -device usb-host,vendorid=0x2c97,productid=0x1015 \
 		-cdrom ${ISO_FILENAME_NOSB}
 
-run_yubi: iso
+run_yubi:
 	qemu-system-x86_64 -cdrom output/livedeb.iso -m 2048 -bios /usr/share/ovmf/OVMF.fd -M q35 -usb -device usb-host,productid=0x0407,vendorid=0x1050
 
-usb: ${ISO_FILENAME}
+usb:
 	test -b ${USB_DISK}
 	@umount ${USB_DISK}* || :
 	sudo dd bs=4M of=${USB_DISK} if=${ISO_FILENAME} status=progress
 	sync
 
-cd: ${ISO_FILENAME}
+cd:
 	wodim -eject -tao ${ISO_FILENAME}
 
 clear_docker:
